@@ -1,0 +1,19 @@
+{
+  "name": "wic",
+  "version": "0.1.0",
+  "description": "Wide-gamut Icon Compiler - OKLCH to PWA asset pipeline",
+  "main": "index.js",
+  "type": "module",
+  "bin": {
+    "wic": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "png-to-ico": "^3.0.1",
+    "puppeteer": "^24.43.1"
+  },
+  "author": "Andrei Furdui",
+  "license": "MIT"
+}
