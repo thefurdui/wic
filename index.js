@@ -11,6 +11,7 @@ import { join } from 'path'
 const options = {
   source: { type: 'string', short: 's' },
   name: { type: 'string', short: 'n' },
+  output: { type: 'string', short: 'o' },
   radius: { type: 'string', short: 'r', default: '0' },
 }
 
@@ -19,19 +20,19 @@ try {
   args = parseArgs({ options, allowPositionals: true }).values
 } catch (e) {
   console.error(
-    `\x1b[31m[ERROR]\x1b[0m Invalid arguments.\nUsage: wic -s <source.svg> -n "<App Name>" [-r <radius_percentage>]`,
+    `\x1b[31m[ERROR]\x1b[0m Invalid arguments.\nUsage: wic -s <source.svg> -n "<App Name>" -o <output_dir> [-r <radius_percentage>]`,
   )
   process.exit(1)
 }
 
-if (!args.source || !args.name) {
+if (!args.source || !args.name || !args.output) {
   console.error(
-    `\x1b[31m[ERROR]\x1b[0m Missing required arguments.\nUsage: wic -s <source.svg> -n "<App Name>" [-r <radius_percentage>]`,
+    `\x1b[31m[ERROR]\x1b[0m Missing required arguments.\nUsage: wic -s <source.svg> -n "<App Name>" -o <output_dir> [-r <radius_percentage>]`,
   )
   process.exit(1)
 }
 
-const OUTPUT_DIR = 'output'
+const OUTPUT_DIR = args.output
 const SOURCE_SVG = args.source
 const APP_NAME = args.name
 const RADIUS_PCT = parseInt(args.radius, 10)
@@ -41,6 +42,7 @@ if (!existsSync(SOURCE_SVG)) {
   process.exit(1)
 }
 
+// Node's fs module natively understands '.' as the current working directory
 if (!existsSync(OUTPUT_DIR)) {
   mkdirSync(OUTPUT_DIR, { recursive: true })
 }
