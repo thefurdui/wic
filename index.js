@@ -42,7 +42,6 @@ if (!existsSync(SOURCE_SVG)) {
   process.exit(1)
 }
 
-// Node's fs module natively understands '.' as the current working directory
 if (!existsSync(OUTPUT_DIR)) {
   mkdirSync(OUTPUT_DIR, { recursive: true })
 }
@@ -51,7 +50,53 @@ console.log(`\x1b[1;34m[INFO]\x1b[0m Booting wic dual-engine for '${APP_NAME}'..
 
 const svgContent = readFileSync(SOURCE_SVG, 'utf8')
 
-// --- 2. Headless Render Engine Factory ---
+// --- 2. The Dynamic Vector SVG Forge ---
+function applyVectorMaskToSvg(originalSvg) {
+  // If the user wants sharp corners, don't clutter the XML with a mask.
+  if (RADIUS_PCT <= 0) return originalSvg
+
+  // Clamp the percentage to 50% max so the vector math doesn't break
+  const clampedPct = Math.min(RADIUS_PCT, 50)
+
+  const viewBoxMatch = originalSvg.match(/viewBox=["']\s*([\d\.-]+)\s+([\d\.-]+)\s+([\d\.-]+)\s+([\d\.-]+)\s*["']/i)
+
+  // Fallbacks in case the SVG lacks a viewBox
+  let minX = 0,
+    minY = 0,
+    width = 512,
+    height = 512
+
+  if (viewBoxMatch) {
+    minX = parseFloat(viewBoxMatch[1])
+    minY = parseFloat(viewBoxMatch[2])
+    width = parseFloat(viewBoxMatch[3])
+    height = parseFloat(viewBoxMatch[4])
+  }
+
+  // Calculate the absolute vector border radius
+  const rx = Math.min(width, height) * (clampedPct / 100)
+
+  const openTagMatch = originalSvg.match(/(<svg[^>]*>)/i)
+  if (!openTagMatch) return originalSvg
+
+  const openTag = openTagMatch[0]
+  const closeTag = '</svg>'
+
+  const innerContent = originalSvg.slice(openTagMatch.index + openTag.length, originalSvg.lastIndexOf(closeTag))
+
+  return `${openTag}
+  <defs>
+    <clipPath id="wic-tab-mask">
+      <rect x="${minX}" y="${minY}" width="${width}" height="${height}" rx="${rx}" ry="${rx}" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#wic-tab-mask)">
+    ${innerContent}
+  </g>
+${closeTag}`
+}
+
+// --- 3. Headless Render Engine Factory ---
 async function createRenderEngine(profile) {
   const browser = await puppeteer.launch({
     headless: 'new',
@@ -104,12 +149,13 @@ async function createRenderEngine(profile) {
   }
 }
 
-// --- 3. The Execution Pipeline ---
+// --- 4. The Execution Pipeline ---
 async function buildAssets() {
   try {
-    // A. Copy raw SVG (Sharp corners, let the browser mask it)
-    writeFileSync(join(OUTPUT_DIR, 'favicon.svg'), svgContent)
-    console.log(`  -> Copied: favicon.svg (Raw XML)`)
+    // A. Forge the Tab SVG (Dynamic Vector Mask based on CLI args)
+    const maskedSvg = applyVectorMaskToSvg(svgContent)
+    writeFileSync(join(OUTPUT_DIR, 'favicon.svg'), maskedSvg)
+    console.log(`  -> Forged: favicon.svg (Vector Mask: ${RADIUS_PCT > 0 ? RADIUS_PCT + '%' : 'Sharp'})`)
 
     // B. Engine 1: Display P3 (Modern Web & Apple)
     console.log(`\x1b[1;34m[INFO]\x1b[0m Spooling Display P3 Engine...`)
@@ -146,12 +192,11 @@ async function buildAssets() {
   }
 }
 
-// --- 4. Manifest Generator & Updater ---
+// --- 5. Manifest Generator & Updater ---
 function updateManifest() {
   const manifestPath = join(OUTPUT_DIR, 'manifest.json')
 
   if (existsSync(manifestPath)) {
-    // Update existing
     try {
       const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
       manifest.name = APP_NAME
@@ -162,7 +207,6 @@ function updateManifest() {
       console.error(`\x1b[31m[ERROR]\x1b[0m Could not parse manifest.json. Ensure it is valid JSON.`)
     }
   } else {
-    // Generate new from scratch
     const baseManifest = {
       name: APP_NAME,
       short_name: APP_NAME,
