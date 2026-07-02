@@ -1,12 +1,14 @@
 {
-  "name": "wic",
+  "name": "@thefurdui/wic",
   "version": "0.1.0",
-  "description": "Wide-gamut Icon Compiler - OKLCH to PWA asset pipeline",
-  "main": "index.js",
+  "description": "A CLI tool that generates wide-gamut (Display P3) web assets and safely converts them to legacy sRGB favicons from a single SVG source.",
   "type": "module",
   "bin": {
-    "wic": "./index.js"
+    "wic": "index.js"
   },
+  "files": [
+    "index.js"
+  ],
   "scripts": {
     "start": "node index.js"
   },
