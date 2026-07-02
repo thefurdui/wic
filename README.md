@@ -1,65 +1,51 @@
-# wic
+# wic (Wide-gamut Icon Compiler)
 
-**Wide-gamut Icon Compiler**
+A CLI tool that generates modern wide-gamut (Display P3) web assets and legacy sRGB favicons from a single SVG source.
 
-A dual-engine build tool for generating wide-gamut (Display P3) web assets and legacy sRGB favicons from a single SVG source.
+## Why?
 
-## The Architecture
+Most standard image processors (like ImageMagick or `librsvg`) rely on underlying C libraries that don't understand modern CSS color spaces like `oklch()` or `display-p3`. If your master SVG uses wide-gamut colors, traditional asset pipelines will clip, mute, or fail to render your icons.
 
-Standard CLI image processors (like ImageMagick and `librsvg`) rely on underlying C libraries that cannot parse modern CSS color spaces like `oklch()`. If your master SVG uses wide-gamut colors, standard asset pipelines will clip, mute, or fail to render your icons entirely.
+`wic` solves this by running a headless Chromium browser to parse your CSS exactly as a real browser would:
 
-`wic` bypasses traditional rasterizers by using a headless Chromium engine to parse your CSS exactly as a modern browser would:
-
-1. It forces a `display-p3-d65` color profile to render Apple Touch and PWA icons with maximum mathematical vibrance.
-2. It reboots into an `srgb` context to natively gamut-map your colors down for legacy `.ico` fallbacks before packing them.
-3. It dynamically injects a pure-vector circular clip-path for desktop Chrome tabs without altering your coordinate space.
-
-## Installation
-
-Clone the repository, install dependencies, and link the binary to your environment:
-
-### npm
-
-```bash
-npm install
-npm link
-```
-
-### pnpm
-
-```bash
-pnpm i
-pnpm link --global
-```
+1. It renders Apple Touch and PWA icons using a `display-p3` color profile to preserve maximum color accuracy.
+2. It safely converts your colors down to an `srgb` profile for legacy `.ico` fallbacks.
+3. It can inject a pure-vector circular mask for desktop Chrome tabs without altering your original coordinate space.
 
 ## Usage
 
 ```bash
-wic -s <source.svg> -n "<App Name>" -o <output_dir> [-r <radius_percentage>]
+npx wic -s <source.svg> -n "<App Name>" -o <output_dir> [-r <radius_percentage>]
 ```
+
+_(Alternatively, use `pnpm dlx wic` or `bunx wic`)_
 
 **Options:**
 
-- `-s, --source` : Path to your master SVG. _Must be a full-bleed, sharp-cornered square._
-- `-n, --name` : The application name (injected or updated in `manifest.json`).
-- `-o, --output` : Target directory for generated assets (e.g., `app/public` or `.`).
-- `-r, --radius` : (Optional) Border radius percentage applied natively to Android/PWA icons and `favicon.svg` (e.g., `15`). `apple-touch-icon.png` file strictly ignores this parameter.
+- `-s, --source` : Path to your master SVG. _Must be a sharp-cornered square._
+- `-n, --name` : The application name (this is injected or updated in your `manifest.json`).
+- `-o, --output` : Target directory for the generated assets (e.g., `public` or `dist`).
+- `-r, --radius` : _(Optional)_ Border radius percentage applied natively to Android/PWA icons and `favicon.svg` (e.g., `15`). Note: The `apple-touch-icon.png` ignores this and stays sharp per Apple's guidelines.
 
 **Example:**
 
 ```bash
-wic -s assets/master-logo.svg -n "Lode Beat" -o app/public -r 15
+npx wic -s assets/master-logo.svg -n "Lode Beat" -o public -r 15
 ```
 
-## Artifacts Generated
+> **Note for `pnpm` users:** If you are using `pnpm`, make sure to allow the `puppeteer` postinstall script to ensure your headless Chromium instance downloads properly.
+>
+> **Note for Linux users:** If you are running this on a barebones Linux server (like a CI/CD pipeline) or WSL, Puppeteer may require standard Chromium system shared libraries (like `libnss3` or `libgbm1`) to be installed via your package manager to prevent crash errors.
 
-Executing the pipeline outputs the following tightly controlled assets:
+## Generated Output
 
-- `favicon.svg` (Display P3, Rounded via flag)
-- `apple-touch-icon.png` (180x180, Display P3, Sharp Corners)
-- `icon-192.png` (192x192, Display P3, Rounded via flag)
-- `icon-512.png` (512x512, Display P3, Rounded via flag)
-- `favicon.ico` (Multi-layer 64/48/32/16, sRGB Gamut-Mapped)
+Running the command will generate the following assets in your target directory:
+
+- `favicon.svg` (Display P3, masked if radius is provided)
+- `apple-touch-icon.png` (180x180, Display P3, sharp corners)
+- `icon-192.png` (192x192, Display P3, rounded if radius provided)
+- `icon-512.png` (512x512, Display P3, rounded if radius provided)
+- `favicon.ico` (Multi-layer 64/48/32/16, sRGB gamut-mapped)
 - `manifest.json` (Bootstrapped or dynamically updated)
 
 ## License
