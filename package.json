@@ -1,6 +1,6 @@
 {
   "name": "@thefurdui/wic",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A CLI tool that generates wide-gamut (Display P3) web assets and safely converts them to legacy sRGB favicons from a single SVG source.",
   "type": "module",
   "bin": {
