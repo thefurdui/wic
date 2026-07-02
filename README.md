@@ -15,10 +15,10 @@ Most standard image processors (like ImageMagick or `librsvg`) rely on underlyin
 ## Usage
 
 ```bash
-npx wic -s <source.svg> -n "<App Name>" -o <output_dir> [-r <radius_percentage>]
+npx @thefurdui/wic -s <source.svg> -n "<App Name>" -o <output_dir> [-r <radius_percentage>]
 ```
 
-_(Alternatively, use `pnpm dlx wic` or `bunx wic`)_
+_(Alternatively, use `pnpm dlx @thefurdui/wic` or `bunx @thefurdui/wic`)_
 
 **Options:**
 
@@ -30,7 +30,7 @@ _(Alternatively, use `pnpm dlx wic` or `bunx wic`)_
 **Example:**
 
 ```bash
-npx wic -s assets/master-logo.svg -n "Lode Beat" -o public -r 15
+npx @thefurdui/wic -s assets/master-logo.svg -n "Lode Beat" -o public -r 15
 ```
 
 > **Note for `pnpm` users:** If you are using `pnpm`, make sure to allow the `puppeteer` postinstall script to ensure your headless Chromium instance downloads properly.
