@@ -217,6 +217,8 @@ function updateManifest() {
       theme_color: '#ffffff',
       background_color: '#ffffff',
       display: 'standalone',
+      start_url: '/',
+      scope: '/',
     }
     writeFileSync(manifestPath, JSON.stringify(baseManifest, null, 2))
     console.log(`\x1b[1;34m[INFO]\x1b[0m Generated new manifest.json from scratch`)
