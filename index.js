@@ -5,7 +5,7 @@ import pngToIco from 'png-to-ico'
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs'
 import { unlink } from 'fs/promises'
 import { parseArgs } from 'util'
-import { join } from 'path'
+import { join, extname } from 'path'
 
 // --- 1. CLI Setup & Guardrails ---
 const options = {
@@ -20,25 +20,35 @@ try {
   args = parseArgs({ options, allowPositionals: true }).values
 } catch (e) {
   console.error(
-    `\x1b[31m[ERROR]\x1b[0m Invalid arguments.\nUsage: wic -s <source.svg> -n "<App Name>" -o <output_dir> [-r <radius_percentage>]`,
+    `\x1b[31m[ERROR]\x1b[0m Invalid arguments.\nUsage: wic -s <source.svg|source.png> -n "<App Name>" -o <output_dir> [-r <radius_percentage>]`,
   )
   process.exit(1)
 }
 
 if (!args.source || !args.name || !args.output) {
   console.error(
-    `\x1b[31m[ERROR]\x1b[0m Missing required arguments.\nUsage: wic -s <source.svg> -n "<App Name>" -o <output_dir> [-r <radius_percentage>]`,
+    `\x1b[31m[ERROR]\x1b[0m Missing required arguments.\nUsage: wic -s <source.svg|source.png> -n "<App Name>" -o <output_dir> [-r <radius_percentage>]`,
   )
   process.exit(1)
 }
 
 const OUTPUT_DIR = args.output
-const SOURCE_SVG = args.source
+const SOURCE_PATH = args.source
 const APP_NAME = args.name
 const RADIUS_PCT = parseInt(args.radius, 10)
 
-if (!existsSync(SOURCE_SVG)) {
-  console.error(`\x1b[31m[ERROR]\x1b[0m Source SVG not found: ${SOURCE_SVG}`)
+const SOURCE_EXT = extname(SOURCE_PATH).toLowerCase()
+const SOURCE_KIND = SOURCE_EXT === '.svg' ? 'svg' : SOURCE_EXT === '.png' ? 'png' : null
+
+if (!SOURCE_KIND) {
+  console.error(
+    `\x1b[31m[ERROR]\x1b[0m Unsupported source format: ${SOURCE_EXT || '(none)'}. Only .svg and .png are supported.`,
+  )
+  process.exit(1)
+}
+
+if (!existsSync(SOURCE_PATH)) {
+  console.error(`\x1b[31m[ERROR]\x1b[0m Source file not found: ${SOURCE_PATH}`)
   process.exit(1)
 }
 
@@ -48,7 +58,16 @@ if (!existsSync(OUTPUT_DIR)) {
 
 console.log(`\x1b[1;34m[INFO]\x1b[0m Booting wic dual-engine for '${APP_NAME}'...`)
 
-const svgContent = readFileSync(SOURCE_SVG, 'utf8')
+const svgContent = SOURCE_KIND === 'svg' ? readFileSync(SOURCE_PATH, 'utf8') : null
+const pngDataUrl =
+  SOURCE_KIND === 'png'
+    ? `data:image/png;base64,${readFileSync(SOURCE_PATH).toString('base64')}`
+    : null
+
+function getSourceMarkup() {
+  if (SOURCE_KIND === 'svg') return svgContent
+  return `<img src="${pngDataUrl}" alt="" />`
+}
 
 // --- 2. The Dynamic Vector SVG Forge ---
 function applyVectorMaskToSvg(originalSvg) {
@@ -124,11 +143,12 @@ async function createRenderEngine(profile) {
                 overflow: hidden;
                 display: flex; align-items: center; justify-content: center;
               }
-              svg { width: 100%; height: 100%; display: block; }
+              svg, img { width: 100%; height: 100%; display: block; }
+              img { object-fit: contain; }
             </style>
           </head>
           <body>
-            <div class="mask">${svgContent}</div>
+            <div class="mask">${getSourceMarkup()}</div>
           </body>
         </html>
       `
@@ -152,10 +172,12 @@ async function createRenderEngine(profile) {
 // --- 4. The Execution Pipeline ---
 async function buildAssets() {
   try {
-    // A. Forge the Tab SVG (Dynamic Vector Mask based on CLI args)
-    const maskedSvg = applyVectorMaskToSvg(svgContent)
-    writeFileSync(join(OUTPUT_DIR, 'favicon.svg'), maskedSvg)
-    console.log(`  -> Forged: favicon.svg (Vector Mask: ${RADIUS_PCT > 0 ? RADIUS_PCT + '%' : 'Sharp'})`)
+    // A. Forge the Tab SVG (SVG sources only)
+    if (SOURCE_KIND === 'svg') {
+      const maskedSvg = applyVectorMaskToSvg(svgContent)
+      writeFileSync(join(OUTPUT_DIR, 'favicon.svg'), maskedSvg)
+      console.log(`  -> Forged: favicon.svg (Vector Mask: ${RADIUS_PCT > 0 ? RADIUS_PCT + '%' : 'Sharp'})`)
+    }
 
     // B. Engine 1: Display P3 (Modern Web & Apple)
     console.log(`\x1b[1;34m[INFO]\x1b[0m Spooling Display P3 Engine...`)
