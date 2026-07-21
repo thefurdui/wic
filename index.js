@@ -2,10 +2,14 @@
 
 import puppeteer from 'puppeteer'
 import pngToIco from 'png-to-ico'
+import { createRequire } from 'module'
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs'
 import { unlink } from 'fs/promises'
 import { parseArgs } from 'util'
 import { join, extname } from 'path'
+
+const require = createRequire(import.meta.url)
+const { version: PACKAGE_VERSION } = require('./package.json')
 
 // --- 1. CLI Setup & Guardrails ---
 const options = {
@@ -13,6 +17,7 @@ const options = {
   name: { type: 'string', short: 'n' },
   output: { type: 'string', short: 'o' },
   radius: { type: 'string', short: 'r', default: '0' },
+  version: { type: 'boolean', short: 'v' },
 }
 
 let args
@@ -20,14 +25,19 @@ try {
   args = parseArgs({ options, allowPositionals: true }).values
 } catch (e) {
   console.error(
-    `\x1b[31m[ERROR]\x1b[0m Invalid arguments.\nUsage: wic -s <source.svg|source.png> -n "<App Name>" -o <output_dir> [-r <radius_percentage>]`,
+    `\x1b[31m[ERROR]\x1b[0m Invalid arguments.\nUsage: wic -s <source.svg|source.png> -n "<App Name>" -o <output_dir> [-r <radius_percentage>] [-v]`,
   )
   process.exit(1)
 }
 
+if (args.version) {
+  console.log(PACKAGE_VERSION)
+  process.exit(0)
+}
+
 if (!args.source || !args.name || !args.output) {
   console.error(
-    `\x1b[31m[ERROR]\x1b[0m Missing required arguments.\nUsage: wic -s <source.svg|source.png> -n "<App Name>" -o <output_dir> [-r <radius_percentage>]`,
+    `\x1b[31m[ERROR]\x1b[0m Missing required arguments.\nUsage: wic -s <source.svg|source.png> -n "<App Name>" -o <output_dir> [-r <radius_percentage>] [-v]`,
   )
   process.exit(1)
 }
