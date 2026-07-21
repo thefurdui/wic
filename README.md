@@ -41,12 +41,14 @@ npx @thefurdui/wic -s assets/master-logo.svg -n "Lode Beat" -o public -r 15
 
 Running the command will generate the following assets in your target directory:
 
-- `favicon.svg` (Display P3, masked if radius is provided)
+- `favicon.svg` (Display P3, masked if radius is provided; SVG sources only)
 - `apple-touch-icon.png` (180x180, Display P3, sharp corners)
-- `icon-192.png` (192x192, Display P3, rounded if radius provided)
-- `icon-512.png` (512x512, Display P3, rounded if radius provided)
+- `icon-48.png` / `icon-96.png` / `icon-144.png` (Google SERP + HiDPI favicons, Display P3)
+- `icon-192.png` / `icon-512.png` (PWA icons, Display P3, rounded if radius provided)
 - `favicon.ico` (Multi-layer 64/48/32/16, sRGB gamut-mapped)
 - `manifest.json` (Bootstrapped or dynamically updated)
+
+On success, `wic` prints a ready-to-paste `<head>` snippet with the correct `<link>` tags for Google Search and browsers.
 
 ## License
 

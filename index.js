@@ -189,12 +189,16 @@ async function buildAssets() {
       console.log(`  -> Forged: favicon.svg (Vector Mask: ${RADIUS_PCT > 0 ? RADIUS_PCT + '%' : 'Sharp'})`)
     }
 
-    // B. Engine 1: Display P3 (Modern Web & Apple)
+    // B. Engine 1: Display P3 (Modern Web, Google SERP & Apple)
+    // Google recommends >48px square favicons; 48/96/144 cover SERP + HiDPI.
     console.log(`\x1b[1;34m[INFO]\x1b[0m Spooling Display P3 Engine...`)
     const p3Engine = await createRenderEngine('display-p3-d65')
     await p3Engine.renderPng(180, 'apple-touch-icon.png', false)
-    await p3Engine.renderPng(192, 'icon-192.png', true)
-    await p3Engine.renderPng(512, 'icon-512.png', true)
+
+    const pwaSizes = [48, 96, 144, 192, 512]
+    for (const s of pwaSizes) {
+      await p3Engine.renderPng(s, `icon-${s}.png`, true)
+    }
     await p3Engine.browser.close()
 
     // C. Engine 2: sRGB (Legacy Fallbacks & ICO)
@@ -219,8 +223,11 @@ async function buildAssets() {
     for (const file of tempFiles) {
       await unlink(file)
     }
+
+    return true
   } catch (err) {
     console.error(`\x1b[31m[ERROR]\x1b[0m Pipeline failure: ${err.message}`)
+    return false
   }
 }
 
@@ -243,6 +250,9 @@ function updateManifest() {
       name: APP_NAME,
       short_name: APP_NAME,
       icons: [
+        { src: '/icon-48.png', sizes: '48x48', type: 'image/png' },
+        { src: '/icon-96.png', sizes: '96x96', type: 'image/png' },
+        { src: '/icon-144.png', sizes: '144x144', type: 'image/png' },
         { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
         { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
       ],
@@ -257,7 +267,31 @@ function updateManifest() {
   }
 }
 
+// --- 6. Head snippet for Google SERP + browsers ---
+function printHeadLinks() {
+  const lines = []
+
+  if (SOURCE_KIND === 'svg') {
+    lines.push(`    <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />`)
+  }
+
+  for (const s of [48, 96, 144, 192, 512]) {
+    lines.push(`    <link rel="icon" type="image/png" sizes="${s}x${s}" href="/icon-${s}.png" />`)
+  }
+
+  lines.push(`    <link rel="icon" href="/favicon.ico" sizes="32x32" />`)
+  lines.push(`    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />`)
+  lines.push(`    <link rel="manifest" href="/manifest.json" />`)
+
+  console.log(`\n\x1b[1;32m[SUCCESS]\x1b[0m wic execution complete. Assets ready.`)
+  console.log(`\x1b[1;33m[COPY]\x1b[0m Paste these into your <head>:`)
+  console.log('')
+  console.log(lines.join('\n'))
+  console.log('')
+}
+
 // --- Run ---
-await buildAssets()
+const ok = await buildAssets()
+if (!ok) process.exit(1)
 updateManifest()
-console.log(`\x1b[1;32m[SUCCESS]\x1b[0m wic execution complete. Assets ready.`)
+printHeadLinks()
