@@ -15,7 +15,7 @@ Most standard image processors (like ImageMagick or `librsvg`) rely on underlyin
 ## Usage
 
 ```bash
-npx @thefurdui/wic -s <source.svg> -n "<App Name>" -o <output_dir> [-r <radius_percentage>]
+npx @thefurdui/wic -s <source.svg> -n "<App Name>" -o <output_dir> [-r <radius_percentage>] [--pwa]
 ```
 
 _(Alternatively, use `pnpm dlx @thefurdui/wic` or `bunx @thefurdui/wic`)_
@@ -26,11 +26,13 @@ _(Alternatively, use `pnpm dlx @thefurdui/wic` or `bunx @thefurdui/wic`)_
 - `-n, --name` : The application name (this is injected or updated in your `manifest.json`).
 - `-o, --output` : Target directory for the generated assets (e.g., `public` or `dist`).
 - `-r, --radius` : _(Optional)_ Border radius percentage applied natively to Android/PWA icons and `favicon.svg` (e.g., `15`). Note: The `apple-touch-icon.png` ignores this and stays sharp per Apple's guidelines.
+- `--pwa` : _(Optional)_ Sets `manifest.json` `display` to `standalone` for installable PWAs. Without this flag, `display` defaults to `browser`.
 
 **Example:**
 
 ```bash
 npx @thefurdui/wic -s assets/master-logo.svg -n "Lode Beat" -o public -r 15
+npx @thefurdui/wic -s assets/master-logo.svg -n "Lode Beat" -o public -r 15 --pwa
 ```
 
 > **Note for `pnpm` users:** If you are using `pnpm`, make sure to allow the `puppeteer` postinstall script to ensure your headless Chromium instance downloads properly.

@@ -12,11 +12,15 @@ const require = createRequire(import.meta.url)
 const { version: PACKAGE_VERSION } = require('./package.json')
 
 // --- 1. CLI Setup & Guardrails ---
+const USAGE =
+  'Usage: wic -s <source.svg|source.png> -n "<App Name>" -o <output_dir> [-r <radius_percentage>] [--pwa] [-v]'
+
 const options = {
   source: { type: 'string', short: 's' },
   name: { type: 'string', short: 'n' },
   output: { type: 'string', short: 'o' },
   radius: { type: 'string', short: 'r', default: '0' },
+  pwa: { type: 'boolean', default: false },
   version: { type: 'boolean', short: 'v' },
 }
 
@@ -24,9 +28,7 @@ let args
 try {
   args = parseArgs({ options, allowPositionals: true }).values
 } catch (e) {
-  console.error(
-    `\x1b[31m[ERROR]\x1b[0m Invalid arguments.\nUsage: wic -s <source.svg|source.png> -n "<App Name>" -o <output_dir> [-r <radius_percentage>] [-v]`,
-  )
+  console.error(`\x1b[31m[ERROR]\x1b[0m Invalid arguments.\n${USAGE}`)
   process.exit(1)
 }
 
@@ -36,9 +38,7 @@ if (args.version) {
 }
 
 if (!args.source || !args.name || !args.output) {
-  console.error(
-    `\x1b[31m[ERROR]\x1b[0m Missing required arguments.\nUsage: wic -s <source.svg|source.png> -n "<App Name>" -o <output_dir> [-r <radius_percentage>] [-v]`,
-  )
+  console.error(`\x1b[31m[ERROR]\x1b[0m Missing required arguments.\n${USAGE}`)
   process.exit(1)
 }
 
@@ -46,6 +46,8 @@ const OUTPUT_DIR = args.output
 const SOURCE_PATH = args.source
 const APP_NAME = args.name
 const RADIUS_PCT = parseInt(args.radius, 10)
+const IS_PWA = Boolean(args.pwa)
+const MANIFEST_DISPLAY = IS_PWA ? 'standalone' : 'browser'
 
 const SOURCE_EXT = extname(SOURCE_PATH).toLowerCase()
 const SOURCE_KIND = SOURCE_EXT === '.svg' ? 'svg' : SOURCE_EXT === '.png' ? 'png' : null
@@ -240,8 +242,11 @@ function updateManifest() {
       const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
       manifest.name = APP_NAME
       manifest.short_name = APP_NAME
+      manifest.display = MANIFEST_DISPLAY
       writeFileSync(manifestPath, JSON.stringify(manifest, null, 2))
-      console.log(`\x1b[1;34m[INFO]\x1b[0m Updated existing manifest.json`)
+      console.log(
+        `\x1b[1;34m[INFO]\x1b[0m Updated existing manifest.json (display: ${MANIFEST_DISPLAY})`,
+      )
     } catch (err) {
       console.error(`\x1b[31m[ERROR]\x1b[0m Could not parse manifest.json. Ensure it is valid JSON.`)
     }
@@ -258,12 +263,14 @@ function updateManifest() {
       ],
       theme_color: '#ffffff',
       background_color: '#ffffff',
-      display: 'standalone',
+      display: MANIFEST_DISPLAY,
       start_url: '/',
       scope: '/',
     }
     writeFileSync(manifestPath, JSON.stringify(baseManifest, null, 2))
-    console.log(`\x1b[1;34m[INFO]\x1b[0m Generated new manifest.json from scratch`)
+    console.log(
+      `\x1b[1;34m[INFO]\x1b[0m Generated new manifest.json from scratch (display: ${MANIFEST_DISPLAY})`,
+    )
   }
 }
 
