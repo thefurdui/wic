@@ -10,10 +10,12 @@
     "wic": "index.js"
   },
   "files": [
-    "index.js"
+    "index.js",
+    "browser.js"
   ],
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "node --test"
   },
   "dependencies": {
     "png-to-ico": "^3.0.1",

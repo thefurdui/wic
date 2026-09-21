@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import puppeteer from 'puppeteer'
+import { ensureBrowser } from './browser.js'
 import pngToIco from 'png-to-ico'
 import { createRequire } from 'module'
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs'
@@ -184,6 +185,8 @@ async function createRenderEngine(profile) {
 // --- 4. The Execution Pipeline ---
 async function buildAssets() {
   try {
+    await ensureBrowser(puppeteer)
+
     // A. Forge the Tab SVG (SVG sources only)
     if (SOURCE_KIND === 'svg') {
       const maskedSvg = applyVectorMaskToSvg(svgContent)

@@ -37,7 +37,9 @@ npx @thefurdui/wic -s assets/master-logo.svg -n "Lode Beat" -o public -r 15
 npx @thefurdui/wic -s assets/master-logo.svg -n "Lode Beat" -o public -r 15 --pwa
 ```
 
-> **Note for `pnpm` users:** If you are using `pnpm`, make sure to allow the `puppeteer` postinstall script to ensure your headless Chromium instance downloads properly.
+> **Browser setup:** If Chrome is missing (for example, because `pnpm` skipped Puppeteer's postinstall script), `wic` downloads the exact browser version its bundled Puppeteer requires on first use. This needs an internet connection; later runs reuse the cached browser. `PUPPETEER_CACHE_DIR` and Puppeteer's download configuration are respected. For an existing browser, set `PUPPETEER_EXECUTABLE_PATH` to its executable. If downloads are explicitly disabled, `wic` prints a matching installation command.
+>
+> Installing the latest Puppeteer separately may download a different Chrome version and will not necessarily fix a missing browser for `wic`.
 >
 > **Note for Linux users:** If you are running this on a barebones Linux server (like a CI/CD pipeline) or WSL, Puppeteer may require standard Chromium system shared libraries (like `libnss3` or `libgbm1`) to be installed via your package manager to prevent crash errors.
 
