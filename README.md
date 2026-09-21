@@ -43,6 +43,19 @@ npx @thefurdui/wic -s assets/master-logo.svg -n "Lode Beat" -o public -r 15 --pw
 >
 > **Note for Linux users:** If you are running this on a barebones Linux server (like a CI/CD pipeline) or WSL, Puppeteer may require standard Chromium system shared libraries (like `libnss3` or `libgbm1`) to be installed via your package manager to prevent crash errors.
 
+## Install from a local checkout
+
+From the repository directory, run:
+
+```bash
+pnpm run install:global
+wic -v
+```
+
+This installs the locked dependencies and registers this checkout's `wic` command in pnpm's global bin directory, so you can use it from any directory. Requires pnpm 11 or newer. If pnpm reports that its global bin directory is not configured, run `pnpm setup`, restart your shell, and retry.
+
+Keep the checkout in place while using the local installation. After pulling dependency updates, rerun `pnpm run install:global`. To remove it, run `pnpm remove --global @thefurdui/wic`.
+
 ## Generated Output
 
 Running the command will generate the following assets in your target directory:
