@@ -130,7 +130,7 @@ ${closeTag}`
 // --- 3. Headless Render Engine Factory ---
 async function createRenderEngine(profile) {
   const browser = await puppeteer.launch({
-    headless: 'new',
+    headless: true,
     args: [`--force-color-profile=${profile}`, '--disable-web-security'],
   })
 

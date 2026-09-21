@@ -14,6 +14,8 @@ Most standard image processors (like ImageMagick or `librsvg`) rely on underlyin
 
 ## Usage
 
+Requires Node.js 22.12.0 or newer (Puppeteer 25).
+
 ```bash
 npx @thefurdui/wic -s <source.svg> -n "<App Name>" -o <output_dir> [-r <radius_percentage>] [--pwa]
 ```
